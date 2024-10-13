@@ -165,7 +165,7 @@ async def url(ctx, urls):
         updates = cfg.session.misc.check_for_updates
         if updates:
             # Run in background
-            version_coro = asyncio.create_task(latest_custom_streamrip_version())
+            version_coro = None
         else:
             version_coro = None
 
@@ -416,24 +416,6 @@ async def id(ctx, source, media_type, id):
             await main.add_by_id(source, media_type, id)
             await main.resolve()
             await main.rip()
-
-
-async def latest_custom_streamrip_version() -> tuple[str, str | None]:
-    async with aiohttp.ClientSession() as s:
-        async with s.get("https://pypi.org/pypi/custom_streamrip/json") as resp:
-            data = await resp.json()
-        version = data["info"]["version"]
-
-        if version == __version__:
-            return version, None
-
-        async with s.get(
-            "https://api.github.com/repos/nathom/custom_streamrip/releases/latest"
-        ) as resp:
-            json = await resp.json()
-        notes = json["body"]
-    return version, notes
-
 
 if __name__ == "__main__":
     rip()
