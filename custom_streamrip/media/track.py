@@ -24,10 +24,8 @@ class Track(Media):
     downloadable: Downloadable
     config: Config
     folder: str
-    # Is None if a cover doesn't exist for the track
     cover_path: str | None
     db: Database
-    # change?
     download_path: str = ""
     is_single: bool = False
 
@@ -38,16 +36,16 @@ class Track(Media):
             add_title(self.meta.title)
     
     async def download(self):
-        # Include the URL and track ID in the description
-        track_url = self.downloadable.url  # Assuming 'url' is the correct attribute
-        track_id = self.extract_track_id(track_url)
-        description = f"Track {self.meta.tracknumber}: {track_url} - track-id={track_id}"
-    
+        # Use the track ID from the metadata
+        track_id = self.meta.info.id
+        track_url = self.downloadable.url
+        description = f"Track {self.meta.tracknumber}: track-id={track_id}"
+
         async with global_download_semaphore(self.config.session.downloads):
             with get_progress_callback(
                 self.config.session.cli.progress_bars,
                 await self.downloadable.size(),
-                description  # Pass the track URL and ID here
+                description
             ) as callback:
                 try:
                     await self.downloadable.download(self.download_path, callback)
@@ -59,7 +57,6 @@ class Track(Media):
                     retry = True
 
             if retry:
-                # Retry with the same description
                 with get_progress_callback(
                     self.config.session.cli.progress_bars,
                     await self.downloadable.size(),
@@ -119,6 +116,9 @@ class Track(Media):
         qobuz_query = parse_qs(urlparse(url).query)
         if 'eid' in qobuz_query:
             return qobuz_query['eid'][0]
+        tidal_match = re.search(r'tidal\.com/.*?/(\d+)', url)
+        if tidal_match:
+            return tidal_match.group(1)
         return "Unknown"
 
 

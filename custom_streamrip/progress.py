@@ -35,7 +35,7 @@ class ProgressManager:
         status = "Completed" if done else "Downloading"
         description = task['desc']
         track_id = task['track_id']
-        self.console.print(f"{status}: {description} - track-id={track_id} {task['completed']}/{task['total']} ({percentage:.1f}%)")
+        self.console.print(f"{status}: {description} {task['completed']}/{task['total']} ({percentage:.1f}%)")
 
     def add_title(self, title: str):
         self.console.print(f"Added task: {title}")
@@ -52,6 +52,10 @@ class ProgressManager:
         qobuz_query = parse_qs(urlparse(desc).query)
         if 'eid' in qobuz_query:
             return qobuz_query['eid'][0]
+        # For Tidal
+        tidal_match = re.search(r'tidal\.com/.*?/(\d+)', desc)
+        if tidal_match:
+            return tidal_match.group(1)
         return "Unknown"
 
 @dataclass(slots=True)
